@@ -1,0 +1,835 @@
+local Workspace = game:GetService("Workspace")
+
+game.StarterGui:SetCore("SendNotification", {
+    Title = "VIPER Executed",
+    Text = "Welcome to VIPER Hub. Enjoy!",
+    Duration = 5
+})
+
+print("\n" .. [[
+
+██    ██ ██ ██████  ███████ ██████  
+██    ██ ██ ██   ██ ██      ██   ██ 
+██    ██ ██ ██████  █████   ██████  
+ ██  ██  ██ ██      ██      ██   ██ 
+  ████   ██ ██      ███████ ██   ██ 
+
+      Loaded Successfully
+
+]])
+
+
+
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+
+
+local Window = Fluent:CreateWindow({
+    Title = "Nova Cat Hub Dead Rails [ Freemium ]",
+    SubTitle = "by Viper_",
+    TabWidth = 160,
+    Theme = "Dark",
+    Acrylic = false,
+    Size = UDim2.fromOffset(490, 345),
+    MinimizeKey = Enum.KeyCode.End
+})
+
+
+
+local Tabs = {
+
+    Main = Window:AddTab({
+        Title = "Tab Main"
+    }),
+
+    Settings = Window:AddTab({
+        Title = "Tab Config"
+    })
+
+};
+
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/viperobii/viperbloxfruit/refs/heads/main/gay"))()
+
+
+
+
+
+Tabs.Main:AddSection("Aim")
+
+local FOVEnabled = false
+local CurrentFOVValue = "100" -- Default value
+
+local Dropdown = Tabs.Main:AddDropdown("FOVDropdown", {
+    Title = "Select FOV",
+    Description = "Field Of View",
+    Values = {"60", "100", "120"},
+    Multi = false,
+    Default = 2, -- Index for "100"
+    Callback = function(Option)
+        CurrentFOVValue = Option
+        if FOVEnabled then
+            game.Workspace.CurrentCamera.FieldOfView = tonumber(CurrentFOVValue)
+        end
+    end
+})
+
+local Toggle = Tabs.Main:AddToggle("FOVToggle", {
+    Title = "Enable FOV",
+    Default = false,
+    Callback = function(Value)
+        FOVEnabled = Value
+        if FOVEnabled then
+            game.Workspace.CurrentCamera.FieldOfView = tonumber(CurrentFOVValue)
+        else
+            game.Workspace.CurrentCamera.FieldOfView = 70 -- Default Roblox FOV
+        end
+    end
+})
+
+local Button = Tabs.Main:AddButton({
+    Title = "Viper Lock",
+    Description = "Executes ViperLock script",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/viperobii/ViperisEnot/refs/heads/main/ViperLock.lua"))()
+    end
+})
+
+
+
+
+
+local Toggle = Tabs.Main:AddToggle("UnlockCamera", {
+    Title = "Unlock Camera",
+    Description = "Unlocks the third-person camera view",
+    Default = true,
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        player.CameraMode = Enum.CameraMode.Classic
+
+        if Value then
+            -- Allow zooming out
+            player.CameraMinZoomDistance = 0.5
+            player.CameraMaxZoomDistance = 120
+        else
+            -- Restore default Roblox settings
+            player.CameraMinZoomDistance = 0.5
+            player.CameraMaxZoomDistance = 10
+        end
+    end
+})
+
+Tabs.Main:AddSection("Train")
+
+local Toggle = Tabs.Main:AddToggle("AutoTPTrain", {
+    Title = "Auto Teleport Train",
+    Description = "Enable It And Disable It Right After",
+    Default = false,
+    Callback = function(Value)
+        if getgenv().AutoTeleportTrainConnection then
+            getgenv().AutoTeleportTrainConnection:Disconnect()
+            getgenv().AutoTeleportTrainConnection = nil
+        end
+
+        if Value then
+            getgenv().AutoTeleportTrainConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                local player = game.Players.LocalPlayer
+                local char = player.Character
+                if not (char and char:FindFirstChild("HumanoidRootPart")) then return end
+
+                local function findSeat(trainName)
+                    local train = workspace:FindFirstChild(trainName)
+                    if not train then return nil end
+
+                    local components = train:FindFirstChild("RequiredComponents")
+                    if not components then return nil end
+
+                    local controls = components:FindFirstChild("Controls")
+                    if not controls then return nil end
+
+                    local conductor = controls:FindFirstChild("ConductorSeat")
+                    if not conductor then return nil end
+
+                    local seat = conductor:FindFirstChild("VehicleSeat")
+                    if seat and not seat.Occupant then
+                        return seat
+                    end
+
+                    return nil
+                end
+
+                local seat = findSeat("default") or findSeat("cattle")
+                if seat then
+                    char:SetPrimaryPartCFrame(seat.CFrame + Vector3.new(0, 3, 0))
+                end
+            end)
+        end
+    end
+})
+
+local Toggle = Tabs.Main:AddToggle("AutoDriveTrain", {
+    Title = "Auto Drive Train",
+    Description = "Enable It When You Sit In Train",
+    Default = false,
+    Callback = function(Value)
+        if getgenv().AutoDriveTrainConnection then
+            getgenv().AutoDriveTrainConnection:Disconnect()
+            getgenv().AutoDriveTrainConnection = nil
+            game:GetService("VirtualInputManager"):SendKeyEvent(false, "W", false, game)
+        end
+
+        if Value then
+            getgenv().AutoDriveTrainConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                local player = game.Players.LocalPlayer
+                local character = player.Character
+                if not (character and character:FindFirstChild("Humanoid") and character:FindFirstChild("HumanoidRootPart")) then return end
+
+                local function findOccupiedSeat(trainName)
+                    local train = workspace:FindFirstChild(trainName)
+                    if not train then return nil end
+
+                    local components = train:FindFirstChild("RequiredComponents")
+                    if not components then return nil end
+
+                    local controls = components:FindFirstChild("Controls")
+                    if not controls then return nil end
+
+                    local conductor = controls:FindFirstChild("ConductorSeat")
+                    if not conductor then return nil end
+
+                    local seat = conductor:FindFirstChild("VehicleSeat")
+                    if seat and seat.Occupant == character.Humanoid then
+                        return seat
+                    end
+
+                    return nil
+                end
+
+                local occupiedSeat = findOccupiedSeat("default") or findOccupiedSeat("cattle")
+
+                if occupiedSeat then
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "W", false, game)
+                else
+                    game:GetService("VirtualInputManager"):SendKeyEvent(false, "W", false, game)
+                end
+            end)
+        end
+    end
+})
+
+local Toggle = Tabs.Main:AddToggle("NoClip", 
+{
+    Title = "NoClip", 
+    Default = false,
+    Callback = function(Value)
+        local RunService = game:GetService("RunService")
+        local Player = game.Players.LocalPlayer
+
+        if getgenv().NoClipConnection then
+            getgenv().NoClipConnection:Disconnect()
+            getgenv().NoClipConnection = nil
+        end
+
+        if Value then
+            getgenv().NoClipEnabled = true
+            getgenv().NoClipConnection = RunService.Stepped:Connect(function()
+                local character = Player.Character
+                if character then
+                    for _, part in ipairs(character:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        else
+            getgenv().NoClipEnabled = false
+            local character = Player.Character
+            if character then
+                for _, part in ipairs(character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true
+                    end
+                end
+            end
+        end
+    end
+})
+
+local Toggle = Tabs.Main:AddToggle("NoFog", {
+    Title = "NoFog",
+    Default = false,
+    Callback = function(Value)
+        local lighting = game:GetService("Lighting")
+        getgenv().FogConnection = getgenv().FogConnection or nil
+        getgenv().OriginalFogEnd = getgenv().OriginalFogEnd or lighting.FogEnd
+        getgenv().OriginalFogStart = getgenv().OriginalFogStart or lighting.FogStart
+        getgenv().OriginalFogColor = getgenv().OriginalFogColor or lighting.FogColor
+        getgenv().OriginalAtmosphere = getgenv().OriginalAtmosphere or (lighting:FindFirstChildOfClass("Atmosphere") and lighting:FindFirstChildOfClass("Atmosphere"):Clone())
+
+        local function removeFog()
+            if lighting:FindFirstChildOfClass("Atmosphere") then
+                lighting:FindFirstChildOfClass("Atmosphere"):Destroy()
+            end
+            lighting.FogEnd = 1e6
+            lighting.FogStart = 1e6
+            getgenv().FogConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                lighting.FogEnd = 1e6
+                lighting.FogStart = 1e6
+                if lighting:FindFirstChildOfClass("Atmosphere") then
+                    lighting:FindFirstChildOfClass("Atmosphere"):Destroy()
+                end
+            end)
+        end
+
+        local function restoreFog()
+            if getgenv().FogConnection then
+                getgenv().FogConnection:Disconnect()
+                getgenv().FogConnection = nil
+            end
+            lighting.FogEnd = getgenv().OriginalFogEnd
+            lighting.FogStart = getgenv().OriginalFogStart
+            lighting.FogColor = getgenv().OriginalFogColor
+            if getgenv().OriginalAtmosphere and not lighting:FindFirstChildOfClass("Atmosphere") then
+                local restored = getgenv().OriginalAtmosphere:Clone()
+                restored.Parent = lighting
+            end
+        end
+
+        if Value then
+            removeFog()
+        else
+            restoreFog()
+        end
+
+        game.Players.LocalPlayer.OnTeleport:Connect(function()
+            if getgenv().FogConnection then
+                getgenv().FogConnection:Disconnect()
+            end
+        end)
+    end
+})
+
+
+local Toggle = Tabs.Main:AddToggle("FullBright", {
+    Title = "FullBright",
+    Description = "Turned On This If It's Night Dark",
+    Default = false,
+    Callback = function(Value)
+        if getgenv().FullBrightConnection then
+            getgenv().FullBrightConnection:Disconnect()
+            getgenv().FullBrightConnection = nil
+        end
+
+        if Value then
+            getgenv().FullBrightConnection = game:GetService("RunService").Stepped:Connect(function()
+                game.Lighting.Brightness = 3
+                game.Lighting.ClockTime = 14
+                game.Lighting.FogEnd = 9e9
+                game.Lighting.GlobalShadows = false
+                game.Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+            end)
+        else
+            game.Lighting.Brightness = 1
+            game.Lighting.ClockTime = 12
+            game.Lighting.FogEnd = 500
+            game.Lighting.GlobalShadows = true
+            game.Lighting.OutdoorAmbient = Color3.fromRGB(100, 100, 100)
+        end
+    end
+})
+
+
+
+
+
+Tabs.Main:AddSection("Stack Main")
+
+
+local Toggle = Tabs.Main:AddToggle("AutoCollectGoldCoal", {
+    Title = "Auto Collect Gold And Coal",
+    Default = false,
+    Callback = function(Value)
+        if getgenv().AutoCollectValuableItems then
+            getgenv().AutoCollectValuableItems:Disconnect()
+            getgenv().AutoCollectValuableItems = nil
+        end
+
+        if Value then
+            getgenv().AutoCollectValuableItems = game:GetService("RunService").Heartbeat:Connect(function()
+                local player = game.Players.LocalPlayer
+                local character = player.Character
+                if not character or not character:FindFirstChild("Humanoid") or character.Humanoid.Health <= 0 then return end
+
+                local rootPart = character:FindFirstChild("HumanoidRootPart")
+                if not rootPart then return end
+
+                for _, item in ipairs(workspace.RuntimeItems:GetChildren()) do
+                    local itemNameList = { "gold", "coal" }
+                    for _, keyword in ipairs(itemNameList) do
+                        if string.find(item.Name:lower(), keyword) then
+                            local pos = item:IsA("BasePart") and item.Position
+                                or (item:IsA("Model") and item:GetPivot().Position)
+                                or (item.PrimaryPart and item.PrimaryPart.Position)
+
+                            if pos and (pos - rootPart.Position).Magnitude <= 17 then
+                                if item:FindFirstChild("ObjectInfo") and item.ObjectInfo:FindFirstChild("TextLabel") then
+                                    local sack = player.Backpack:FindFirstChild("Sack")
+                                    if sack then
+                                        character.Humanoid:EquipTool(sack)
+                                    end
+                                    game.ReplicatedStorage.Remotes.StoreItem:FireServer(item)
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+})
+
+
+
+
+
+
+local Toggle = Tabs.Main:AddToggle("AutoCollectMoneyBag", {
+    Title = "Auto Collect MoneyBag",
+    Description = "",
+    Default = false,
+    Callback = function(Value)
+        if getgenv().AutoCollectMoneyBagConnection then
+            getgenv().AutoCollectMoneyBagConnection:Disconnect()
+            getgenv().AutoCollectMoneyBagConnection = nil
+        end
+
+        if Value then
+            getgenv().AutoCollectMoneyBagConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                local moneyBag = workspace:FindFirstChild("RuntimeItems") and workspace.RuntimeItems:FindFirstChild("Moneybag")
+                if moneyBag and moneyBag:FindFirstChild("MoneyBag") then
+                    local prompt = moneyBag.MoneyBag:FindFirstChild("CollectPrompt")
+                    if prompt then
+                        prompt.HoldDuration = 0
+                        prompt.MaxActivationDistance = 1e3
+                        fireproximityprompt(prompt)
+                    end
+                end
+            end)
+        end
+    end
+})
+
+Tabs.Main:AddSection("Visual")
+
+local Dropdown = Tabs.Main:AddDropdown("ChamColor", {
+    Title = "ESP Color",
+    Description = "",
+    Values = { "Red", "Blue", "Green", "Yellow", "Purple", "White" },
+    Multi = false,
+    Default = "Red",
+    Callback = function(option)
+        local colors = {
+            Red = Color3.fromRGB(255, 0, 0),
+            Blue = Color3.fromRGB(0, 0, 255),
+            Green = Color3.fromRGB(0, 255, 0),
+            Yellow = Color3.fromRGB(255, 255, 0),
+            Purple = Color3.fromRGB(170, 0, 255),
+            White = Color3.fromRGB(255, 255, 255)
+        }
+
+        getgenv().ChamColor = colors[option] or Color3.fromRGB(255, 0, 0)
+
+        -- Update ESP highlights if active
+        local allESP = {
+            getgenv().PlayerChams,
+            getgenv().BankChams,
+            getgenv().TrainESP,
+            getgenv().WalkerESP,
+            getgenv().ESPOres
+        }
+
+        for _, group in pairs(allESP) do
+            if group then
+                for _, highlight in pairs(group) do
+                    if highlight:IsA("Highlight") then
+                        highlight.FillColor = getgenv().ChamColor
+                        highlight.OutlineColor = getgenv().ChamColor
+                    end
+                end
+            end
+        end
+    end
+})
+
+local Toggle = Tabs.Main:AddToggle("EspPlayers", {
+    Title = "ESP Players",
+    Default = false,
+    Callback = function(Value)
+        getgenv().EspPlayers = Value
+
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        getgenv().PlayerChams = getgenv().PlayerChams or {}
+        local chams = getgenv().PlayerChams
+
+        local function addCham(player)
+            if player == LocalPlayer or chams[player] then return end
+            local char = player.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "PlayerCham"
+            highlight.FillColor = Color3.fromRGB(255, 0, 0)
+            highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+            highlight.FillTransparency = 0.5
+            highlight.OutlineTransparency = 0
+            highlight.Adornee = char
+            highlight.Parent = char
+
+            chams[player] = highlight
+        end
+
+        local function removeCham(player)
+            if chams[player] then
+                chams[player]:Destroy()
+                chams[player] = nil
+            end
+        end
+
+        local function enableChams()
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer then
+                    addCham(player)
+                end
+                player.CharacterAdded:Connect(function()
+                    task.wait(1)
+                    if getgenv().EspPlayers then
+                        addCham(player)
+                    end
+                end)
+            end
+
+            Players.PlayerAdded:Connect(function(player)
+                player.CharacterAdded:Connect(function()
+                    task.wait(1)
+                    if getgenv().EspPlayers then
+                        addCham(player)
+                    end
+                end)
+            end)
+        end
+
+        local function disableChams()
+            for player, highlight in pairs(chams) do
+                if highlight then highlight:Destroy() end
+            end
+            table.clear(chams)
+        end
+
+        if Value then
+            enableChams()
+        else
+            disableChams()
+        end
+    end
+})
+
+local Toggle = Tabs.Main:AddToggle("EspTrain", {
+    Title = "ESP Train",
+    Default = false,
+    Callback = function(Value)
+        if getgenv().ESPTrainConnection then
+            getgenv().ESPTrainConnection:Disconnect()
+            getgenv().ESPTrainConnection = nil
+        end
+
+        -- Cleanup existing ESPs
+        for _, name in ipairs({"default", "cattle"}) do
+            local train = workspace:FindFirstChild(name)
+            if train then
+                local seat = train:FindFirstChild("RequiredComponents")
+                if seat and seat:FindFirstChild("Controls") and seat.Controls:FindFirstChild("ConductorSeat") then
+                    local vs = seat.Controls.ConductorSeat:FindFirstChild("VehicleSeat")
+                    if vs and vs:FindFirstChild("TrainESP") then
+                        vs.TrainESP:Destroy()
+                    end
+                end
+            end
+        end
+
+        if Value then
+            local trains = {}
+
+            for _, name in ipairs({"default", "cattle"}) do
+                local train = workspace:FindFirstChild(name)
+                if train then
+                    local seat = train:FindFirstChild("RequiredComponents")
+                    if seat and seat:FindFirstChild("Controls") and seat.Controls:FindFirstChild("ConductorSeat") then
+                        local vs = seat.Controls.ConductorSeat:FindFirstChild("VehicleSeat")
+                        if vs then
+                            table.insert(trains, vs)
+
+                            -- Create BillboardGui
+                            local billboard = Instance.new("BillboardGui", vs)
+                            billboard.Name = "TrainESP"
+                            billboard.Size = UDim2.new(0, 100, 0, 40)
+                            billboard.AlwaysOnTop = true
+                            billboard.StudsOffset = Vector3.new(0, 3, 0)
+
+                            local textLabel = Instance.new("TextLabel", billboard)
+                            textLabel.Size = UDim2.new(1, 0, 1, 0)
+                            textLabel.BackgroundTransparency = 1
+                            textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                            textLabel.TextStrokeTransparency = 0
+                            textLabel.TextScaled = true
+                            textLabel.Font = Enum.Font.SourceSansBold
+                        end
+                    end
+                end
+            end
+
+            local player = game.Players.LocalPlayer
+            getgenv().ESPTrainConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    for _, vs in ipairs(trains) do
+                        local label = vs:FindFirstChild("TrainESP") and vs.TrainESP:FindFirstChildOfClass("TextLabel")
+                        if label then
+                            local dist = math.floor((vs.Position - player.Character.HumanoidRootPart.Position).Magnitude)
+                            label.Text = "Train: " .. dist .. "m"
+                        end
+                    end
+                end
+            end)
+        end
+    end
+})
+
+
+
+local Toggle = Tabs.Main:AddToggle("ESPObjects", {
+    Title = "ESP Objects",
+    Default = false,
+    Callback = function(Value)
+        getgenv().ESPObjects = Value
+
+        -- Create the Highlight_Folder if it doesn't exist
+        local Highlight_Folder = game.CoreGui:FindFirstChild("Highlight_Folder") or Instance.new("Folder")
+        Highlight_Folder.Name = "Highlight_Folder"
+        Highlight_Folder.Parent = game.CoreGui
+
+        -- Ensure the connections table is initialized
+        if not getgenv().ESPObjectsConnections then
+            getgenv().ESPObjectsConnections = {}
+        end
+
+        -- Function to create ESP for objects
+        local function CreateESP(v)
+            local labelText = ""
+            if v:FindFirstChild("ObjectInfo") and v.ObjectInfo:FindFirstChild("TextLabel") then
+                labelText = v.ObjectInfo.TextLabel.Text
+            end
+            if v:FindFirstChild("Equippable") then
+                labelText = "Equippable"
+            end
+            labelText = string.lower(labelText)
+
+            local keywords = {
+                "valuable", "currency", "melee", "gun", "weapon", "equippable", "light source",
+                "consumable", "weld to use", "bulletproof", "tool", "ammo", "fuel",
+                "attracts lightning but makes it harmless"
+            }
+
+            for _, word in pairs(keywords) do
+                if string.find(labelText, word) then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = v.Name
+                    highlight.FillColor = Color3.fromRGB(255, 215, 0)
+                    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    highlight.FillTransparency = 0.7
+                    highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
+                    highlight.Adornee = v:IsA("Model") and v:FindFirstChildWhichIsA("BasePart") or v
+                    highlight.Parent = Highlight_Folder
+
+                    -- Create a BillboardGui for the ESP label
+                    local billboard = Instance.new("BillboardGui", v)
+                    billboard.Name = "ESP_Billboard"
+                    billboard.Adornee = v
+                    billboard.Size = UDim2.new(0, 200, 0, 50)  -- Adjust size for medium text
+                    billboard.StudsOffset = Vector3.new(0, 1, 0)
+                    billboard.AlwaysOnTop = true
+
+                    local label = Instance.new("TextLabel", billboard)
+                    label.Size = UDim2.new(1, 0, 1, 0)
+                    label.Text = v.Name
+                    label.TextColor3 = Color3.fromRGB(92, 46, 46)
+                    label.TextSize = 12
+                    label.BackgroundTransparency = 1
+                    label.TextStrokeTransparency = 0
+                    label.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
+
+                    break
+                end
+            end
+        end
+
+        -- Toggle actions based on the value
+        if Value then
+            -- Iterate through all descendants of workspace (including all objects)
+            for _, item in ipairs(workspace:GetDescendants()) do
+                if item:IsA("Model") or item:IsA("BasePart") then
+                    CreateESP(item)
+                end
+            end
+
+            -- Connection for newly added items
+            getgenv().ESPObjectsConnections["Added"] = workspace.DescendantAdded:Connect(function(v)
+                if v:IsA("Model") or v:IsA("BasePart") then
+                    CreateESP(v)
+                end
+            end)
+
+            -- Connection for removed items
+            getgenv().ESPObjectsConnections["Removed"] = workspace.DescendantRemoving:Connect(function(v)
+                if Highlight_Folder:FindFirstChild(v.Name) then
+                    Highlight_Folder[v.Name]:Destroy()
+                end
+                if v:FindFirstChild("ESP_Billboard") then
+                    v.ESP_Billboard:Destroy()
+                end
+            end)
+        else
+            -- Clear all ESPs and remove connections
+            if Highlight_Folder then
+                Highlight_Folder:ClearAllChildren()
+            end
+            for _, item in ipairs(workspace:GetDescendants()) do
+                if item:FindFirstChild("ESP_Billboard") then
+                    item.ESP_Billboard:Destroy()
+                end
+            end
+            for _, conn in pairs(getgenv().ESPObjectsConnections) do
+                if typeof(conn) == "RBXScriptConnection" then
+                    conn:Disconnect()
+                end
+            end
+            getgenv().ESPObjectsConnections = {}
+        end
+    end
+})
+
+
+local Toggle = Tabs.Main:AddToggle("ESPOres", {
+    Title = "ESP Ores",
+    Description = "Highlights all ore objects in the world with outlines and labels.",
+    Default = false,
+    Callback = function(Value)
+        if getgenv().ESPOresConnection then
+            for _, v in pairs(getgenv().ESPOresConnection) do
+                if typeof(v) == "RBXScriptConnection" then
+                    v:Disconnect()
+                end
+            end
+            getgenv().ESPOresConnection = nil
+        end
+
+        local Highlight_Folder = game.CoreGui:FindFirstChild("Highlight_Folder_Ores") or Instance.new("Folder")
+        Highlight_Folder.Name = "Highlight_Folder_Ores"
+        Highlight_Folder.Parent = game.CoreGui
+
+        local function HighlightOres(v)
+            local Highlight = Instance.new("Highlight")
+            Highlight.Name = v.Name
+            Highlight.FillColor = Color3.fromRGB(255, 215, 0)
+            Highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            Highlight.FillTransparency = 0.7
+            Highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
+            Highlight.Parent = Highlight_Folder
+
+            local Billboard = Instance.new("BillboardGui")
+            Billboard.Name = "ESP_Billboard"
+            Billboard.Parent = v
+            Billboard.Adornee = v
+            Billboard.Size = UDim2.new(0, 25, 0, 25)
+            Billboard.StudsOffset = Vector3.new(0, 1, 0)
+            Billboard.AlwaysOnTop = true
+
+            local TextLabel = Instance.new("TextLabel")
+            TextLabel.Parent = Billboard
+            TextLabel.Size = UDim2.new(1, 0, 1, 0)
+            TextLabel.Text = v.Name
+            TextLabel.TextColor3 = Color3.fromRGB(92, 46, 46)
+            TextLabel.TextSize = 10
+            TextLabel.BackgroundTransparency = 1
+            TextLabel.TextStrokeTransparency = 0
+            TextLabel.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
+
+            if v:IsA("BasePart") then
+                Highlight.Adornee = v
+            elseif v:IsA("Model") then
+                getgenv().ESPOresConnection[v] = v.ChildAdded:Connect(function(_v)
+                    if _v:IsA("BasePart") then
+                        Highlight.Adornee = _v
+                    end
+                end)
+            end
+        end
+
+        if Value then
+            getgenv().ESPOresConnection = {}
+
+            for _, v in ipairs(workspace:WaitForChild("Ore"):GetChildren()) do
+                if v:IsA("Model") or v:IsA("BasePart") then
+                    HighlightOres(v)
+                end
+            end
+
+            getgenv().ESPOresConnection["Added"] = workspace.Ore.ChildAdded:Connect(function(v)
+                if v:IsA("Model") or v:IsA("BasePart") then
+                    HighlightOres(v)
+                end
+            end)
+
+            getgenv().ESPOresConnection["Removed"] = workspace.Ore.ChildRemoved:Connect(function(v)
+                if Highlight_Folder:FindFirstChild(v.Name) then
+                    Highlight_Folder[v.Name]:Destroy()
+                end
+                if v:FindFirstChild("ESP_Billboard") then
+                    v.ESP_Billboard:Destroy()
+                end
+                if getgenv().ESPOresConnection[v] then
+                    getgenv().ESPOresConnection[v]:Disconnect()
+                    getgenv().ESPOresConnection[v] = nil
+                end
+            end)
+        else
+            if Highlight_Folder then
+                Highlight_Folder:ClearAllChildren()
+            end
+            for _, v in ipairs(workspace:WaitForChild("Ore"):GetChildren()) do
+                if v:FindFirstChild("ESP_Billboard") then
+                    v.ESP_Billboard:Destroy()
+                end
+            end
+            if getgenv().ESPOresConnection then
+                for _, v in pairs(getgenv().ESPOresConnection) do
+                    if typeof(v) == "RBXScriptConnection" then
+                        v:Disconnect()
+                    end
+                end
+                getgenv().ESPOresConnection = nil
+            end
+        end
+    end
+})
+
+
+
