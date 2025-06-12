@@ -1,0 +1,69 @@
+local Toggle = Tabs.Main:AddToggle("EspTrain", {
+    Title = "ESP Train",
+    Default = false,
+    Callback = function(Value)
+        if getgenv().ESPTrainConnection then
+            getgenv().ESPTrainConnection:Disconnect()
+            getgenv().ESPTrainConnection = nil
+        end
+
+        -- Cleanup existing ESPs
+        for _, name in ipairs({"default", "cattle"}) do
+            local train = workspace:FindFirstChild(name)
+            if train then
+                local seat = train:FindFirstChild("RequiredComponents")
+                if seat and seat:FindFirstChild("Controls") and seat.Controls:FindFirstChild("ConductorSeat") then
+                    local vs = seat.Controls.ConductorSeat:FindFirstChild("VehicleSeat")
+                    if vs and vs:FindFirstChild("TrainESP") then
+                        vs.TrainESP:Destroy()
+                    end
+                end
+            end
+        end
+
+        if Value then
+            local trains = {}
+
+            for _, name in ipairs({"default", "cattle"}) do
+                local train = workspace:FindFirstChild(name)
+                if train then
+                    local seat = train:FindFirstChild("RequiredComponents")
+                    if seat and seat:FindFirstChild("Controls") and seat.Controls:FindFirstChild("ConductorSeat") then
+                        local vs = seat.Controls.ConductorSeat:FindFirstChild("VehicleSeat")
+                        if vs then
+                            table.insert(trains, vs)
+
+                            -- Create BillboardGui
+                            local billboard = Instance.new("BillboardGui", vs)
+                            billboard.Name = "TrainESP"
+                            billboard.Size = UDim2.new(0, 100, 0, 40)
+                            billboard.AlwaysOnTop = true
+                            billboard.StudsOffset = Vector3.new(0, 3, 0)
+
+                            local textLabel = Instance.new("TextLabel", billboard)
+                            textLabel.Size = UDim2.new(1, 0, 1, 0)
+                            textLabel.BackgroundTransparency = 1
+                            textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                            textLabel.TextStrokeTransparency = 0
+                            textLabel.TextScaled = true
+                            textLabel.Font = Enum.Font.SourceSansBold
+                        end
+                    end
+                end
+            end
+
+            local player = game.Players.LocalPlayer
+            getgenv().ESPTrainConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    for _, vs in ipairs(trains) do
+                        local label = vs:FindFirstChild("TrainESP") and vs.TrainESP:FindFirstChildOfClass("TextLabel")
+                        if label then
+                            local dist = math.floor((vs.Position - player.Character.HumanoidRootPart.Position).Magnitude)
+                            label.Text = "Train: " .. dist .. "m"
+                        end
+                    end
+                end
+            end)
+        end
+    end
+})
